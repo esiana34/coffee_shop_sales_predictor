@@ -39,7 +39,8 @@ model = xgb.XGBRegressor(
 )
 
 print('hi')
-print('goodbye')
+print('im about to give uo')
+print("like fr")
 # train model
 model.fit(X_train, y_train)
 
