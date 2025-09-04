@@ -38,7 +38,8 @@ model = xgb.XGBRegressor(
     random_state= 42
 )
 
-
+print('hi')
+print('goodbye')
 # train model
 model.fit(X_train, y_train)
 
