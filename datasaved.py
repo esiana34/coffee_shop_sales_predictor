@@ -2,6 +2,11 @@ import pandas as pd
 import glob
 import os
 import csv
+import holidays
+from pandas.tseries.holiday import USFederalHolidayCalendar
+
+#create calendar for US
+cal = USFederalHolidayCalendar()
 
 # Folder where your uploaded files are stored
 folder_path = r"C:\Users\esian\Desktop\Kafe\data\raw_data"
@@ -35,6 +40,10 @@ for file in files:
         df['month'] = df['time'].dt.month
         df['day'] = df['time'].dt.day
         df['is_weekend'] = df['day_of_week'].isin([5,6]).astype(int)
+
+# set the holidays on the csv
+        uholidays = cal.holidays(start= df["time"].min(), end=df['time'].max())
+        df['is_holiday'] = df['time'].isin(holidays).astype(int)
 
 # make the data clean
         df_cleaned = df.dropna(subset=['time'])
