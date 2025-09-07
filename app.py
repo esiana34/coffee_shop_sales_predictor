@@ -4,6 +4,7 @@ from wtforms import SubmitField, MultipleFileField
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import os
 from werkzeug.utils import secure_filename
+from src.data.data_refining.data_cleaning import cleanLocation
 
 
 # Optional: Add a directory for uploaded files
@@ -45,15 +46,18 @@ def home():
     
     return render_template("home.html", form=form)
 
-# Getting geolocation 
+# Getting geolocation
+@app.route('/get-location', methods=["POST"])
 def save_location():
     data = request.get_json()
     latitude = data.get('latitude')
     longitude = data.get('longitude')
     # Process or store the location data as needed
-    # print(f"Received location: Latitude={latitude}, Longitude={longitude}")
-    # return jsonify({"message": "Location received successfully"}), 200
-    return latitude, longitude
+    print(f"Received location: Latitude={latitude}, Longitude={longitude}")
+
+    # return json for js
+    return jsonify({"message": "Location received successfully"}), 200
+    
 
 
 if __name__ == "__main__":
