@@ -1,53 +1,61 @@
-import streamlit as st
-import pandas as pd
+from flask_wtf import FlaskForm
+from flask_wtf.file import FileField, FileAllowed, FileRequired
+from wtforms import SubmitField, MultipleFileField
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import os
+from werkzeug.utils import secure_filename
 
-# python -m streamlit run app.py
-def main():
-    st.title('Upload file')
 
-    menu = ["Home", "Dataset", "Document Files"] 
-    choice = st.sidebar.selectbox('Menu', menu)
-    parent_dir = r"C:\Users\esian\Desktop\Kafe\data\raw_data"
+# Optional: Add a directory for uploaded files
+UPLOAD_FOLDER = 'uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-    if choice == "Home":
-        st.subheader("Home")
+# Configurations
+app = Flask(__name__, template_folder=r"C:\Users\esian\Desktop\Kafe\templates")
+app.config['SECRET_KEY'] = "supersecret"
+app.config['UPLOAD_FOLDER'] = r"C:\Users\esian\Desktop\Kafe\src\data\raw_data"
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
-        # File uploader outside the form for instant preview
-        file_uploads = st.file_uploader("Upload Excel or CSV file", type=["csv", "xls", "xlsx"], accept_multiple_files=True)
+
+# uplaoding class
+class uploader_file(FlaskForm):
+    file = MultipleFileField("File", validators=[
+        FileRequired(),
+        FileAllowed(['csv', 'xlsx'], 'Only CSV and XLSX files are allowed!')
+    ])
+    submit = SubmitField("Submit")
+
+# Homepage
+@app.route('/', methods=["GET", "POST"])
+def home():
+    form = uploader_file()
+
+    # Check if the form was submitted and if the data is valid
+    if form.validate_on_submit():
+        uploaded_files = form.file.data
         
-        df = None
-        for file_upload in file_uploads:
-            if file_upload is not None:
-                try:
-                    if file_upload.name.endswith(('xls', 'xlsx')):
-                        df = pd.read_excel(file_upload)
-                    else:
-                        df = pd.read_csv(file_upload)
-                    
-                    st.info("Preview of uploaded file:")
-                    st.dataframe(df)
+        
+        for upload_file in uploaded_files:
+            if upload_file:
+               # Create a secure filename to prevent security issues
+                filename = secure_filename(upload_file.filename)
+                
+               # Save the file to the specified UPLOAD_FOLDER
+                upload_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    
+    return render_template("home.html", form=form)
 
-                except Exception as e:
-                        st.error(f"Error reading file: {e}")
+# Getting geolocation 
+def save_location():
+    data = request.get_json()
+    latitude = data.get('latitude')
+    longitude = data.get('longitude')
+    # Process or store the location data as needed
+    # print(f"Received location: Latitude={latitude}, Longitude={longitude}")
+    # return jsonify({"message": "Location received successfully"}), 200
+    return latitude, longitude
 
-        # Add a separate button for saving
-        if st.button("Submit"):
-            if file_uploads:
-                for file_upload in file_uploads:
-                    file_path = os.path.join(parent_dir, file_upload.name)
-                    with open(file_path, "wb") as f:
-                        f.write(file_upload.getbuffer())
-                st.success("All files saved successfully!")
-            else:
-                st.warning("Please upload at least one file before submitting.")
-
-
-    elif choice == "Dataset":
-        st.subheader("Dataset section coming soon!")
-
-    else:
-        st.subheader("Document Files section coming soon!")
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True)
+ 
