@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>File Uploader</title>
+    <script src="{{ url_for('static', filename='js/location.js') }}"></script>
+</head>
+<body>
+ <button onclick="GetLocation()">Give access to location </button>
+ 
+  
+        
+    
+    <h1>Upload your files</h1>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul class="flashes">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    {% if not form.is_submitted() or not form.validate() %}
+        <form method="POST" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <div>
+                {{ form.file.label }}<br>
+                {{ form.file() }}
+                {% for error in form.file.errors %}
+                    <span style="color: red;">{{ error }}</span>
+                {% endfor %}
+            </div>
+
+            <div>
+                {{ form.submit() }}
+            </div>
+        </form>
+    {% else %}
+        <p>Your files have been successfully uploaded!</p>
+        <p><a href="{{ url_for('home') }}">Upload more files</a></p>
+    {% endif %}
+
+
+</body>
+</html>

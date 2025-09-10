@@ -4,7 +4,7 @@ from wtforms import SubmitField, MultipleFileField
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import os
 from werkzeug.utils import secure_filename
-from src.data.data_refining.data_cleaning import cleanLocation
+from src.data.data_refining.data_cleaning import calendarSetup
 
 
 # Optional: Add a directory for uploaded files
@@ -55,11 +55,18 @@ def save_location():
     # Process or store the location data as needed
     print(f"Received location: Latitude={latitude}, Longitude={longitude}")
 
+    cal = calendarSetup(latitude, longitude)
+
+    # Run full pipeline: merge files, add holidays, add weather
+    cal.run_full_pipeline()
+
     # return json for js
     return jsonify({"message": "Location received successfully"}), 200
+    
     
 
 
 if __name__ == "__main__":
     app.run(debug=True)
+    
  
