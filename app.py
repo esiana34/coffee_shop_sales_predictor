@@ -12,6 +12,10 @@ from src.data.data_refining.data_cleaning import calendarSetup
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# call model
+model = joblib.load("model/model.pkl")
+encoder = joblib.load('model/encoder.pkl')
+
 # Configurations
 app = Flask(__name__,
             template_folder=r"C:\Users\esian\Desktop\Kafe\templates",
@@ -48,7 +52,7 @@ def home():
                # Save the file to the specified UPLOAD_FOLDER
                 upload_file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
     
-    return render_template("home.html", form=form)
+    return render_template("index.html", form=form)
 
 # Getting geolocation
 @app.route('/get-location', methods=["POST"])
@@ -73,7 +77,41 @@ def predict():
 
     latitude = g.latitude
     longitude = g.longitude
+    # call class for data cleaning
+    cal = calendarSetup(latitude, longitude)
+    df = cal.run_full_pipeline()
+
+    # encode item column 
+    df["item_encoded"] = encoder.transform(df["item"])
+
+    # select features 
+    feature_cols = [
+        "day_of_week", "is_holiday",
+        "sales_lag_1", "sales_lag_2", "sales_lag_3", "sales_lag_7",
+        "temperature_2m_max", "temperature_2m_min", "precipitation_sum",
+        "item_encoded"
+    ]
+
+    X = df[feature_cols]
+
+    # Predict
+    y_pred_log = model.predict(X)
+    df["predicted_sales"] = np.expm1(y_pred_log)
+
+    # Get last date in file + 1 day
+    next_day = pd.to_datetime(df["date"].max()) + pd.Timedelta(days=1)
     
+    # Average per item for that next day prediction
+    predictions = df.groupby("item")["predicted_sales"].mean().round(1)
+
+    # Create a simple DataFrame with text
+    result_df = pd.DataFrame({
+        "date": [next_day] * len(predictions),
+        "item": predictions.index,
+        "predicted_sales": predictions.values
+    })
+
+    return render_template ('index.html', prediction_text = 'Next day predicted sales:\n {}'.format(result_df))
     
 
 
