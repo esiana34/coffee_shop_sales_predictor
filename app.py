@@ -1,7 +1,8 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import SubmitField, MultipleFileField
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, g
+from flask_cors import CORS
 import os
 from werkzeug.utils import secure_filename
 from src.data.data_refining.data_cleaning import calendarSetup
@@ -12,7 +13,10 @@ UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Configurations
-app = Flask(__name__, template_folder=r"C:\Users\esian\Desktop\Kafe\templates")
+app = Flask(__name__,
+            template_folder=r"C:\Users\esian\Desktop\Kafe\templates",
+            static_folder=r"C:\Users\esian\Desktop\Kafe\static")
+CORS(app)
 app.config['SECRET_KEY'] = "supersecret"
 app.config['UPLOAD_FOLDER'] = r"C:\Users\esian\Desktop\Kafe\src\data\raw_data"
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
@@ -50,18 +54,25 @@ def home():
 @app.route('/get-location', methods=["POST"])
 def save_location():
     data = request.get_json()
-    latitude = data.get('latitude')
-    longitude = data.get('longitude')
+    g.latitude = data.get('latitude')
+    g.longitude = data.get('longitude')
+
+
     # Process or store the location data as needed
-    print(f"Received location: Latitude={latitude}, Longitude={longitude}")
-
-    cal = calendarSetup(latitude, longitude)
-
-    # Run full pipeline: merge files, add holidays, add weather
-    cal.run_full_pipeline()
+    print(f"Received location: Latitude={g.latitude}, Longitude={g.longitude}")
 
     # return json for js
     return jsonify({"message": "Location received successfully"}), 200
+
+# prediction tab
+@app.route('/predict', methods=["POST"])
+def predict():
+    # getting coord
+    if not hasattr(g, 'latitude') or not hasattr(g, 'longitude'):
+        return jsonify({"error": "Location not set yet"}), 400
+
+    latitude = g.latitude
+    longitude = g.longitude
     
     
 
