@@ -82,8 +82,13 @@ def predict():
     cal = calendarSetup(latitude, longitude)
     df = cal.run_full_pipeline()
 
-    # encode item column 
-    df["item_encoded"] = encoder.transform(df["item"])
+        if not os.path.exists(cleaned_file):
+            return render_template(
+                'predict.html',
+                prediction_text='Cannot predict future items without data.',
+                result_df=pd.DataFrame()
+            )
+
 
     # select features 
     feature_cols = [
