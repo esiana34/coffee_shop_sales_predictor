@@ -71,13 +71,10 @@ def save_location():
 # prediction tab
 @app.route('/predict', methods=["POST"])
 def predict():
-    # getting coord
-    if not hasattr(g, 'latitude') or not hasattr(g, 'longitude'):
-        return jsonify({"error": "Location not set yet"}), 400
+    if request.method == "GET":
+        # show empty upload form
+        return render_template('predict.html', prediction_text='', result_df=pd.DataFrame())
 
-    latitude = g.latitude
-    longitude = g.longitude
-    # call class for data cleaning
     try:
         latitude = getattr(g, 'latitude', None)
         longitude = getattr(g, 'longitude', None)
