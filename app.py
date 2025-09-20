@@ -78,6 +78,10 @@ def predict():
     latitude = g.latitude
     longitude = g.longitude
     # call class for data cleaning
+    try:
+        latitude = getattr(g, 'latitude', None)
+        longitude = getattr(g, 'longitude', None)
+
     cal = calendarSetup(latitude, longitude)
     df = cal.run_full_pipeline()
 
